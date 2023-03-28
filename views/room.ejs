@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1 id="roomid"></h1>
+    <h1 id="owner"></h1>
+    <div id="players"></div>
+    <form id="startt">
+        <button type="submit">startt</button>
+      </form>
+
+      
+    <div id="status"></div>
+
+    <div id="game"></div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+
+      const socket = io();
+
+      socket.on('roomload', (room,roomname, game) => {
+        document.getElementById('roomid').innerHTML = `Room Name: ${roomname}`;
+        document.getElementById('owner').innerHTML = `Owner: ${room.owner}`;
+        document.getElementById('status').innerHTML = `${room.status}`;
+        console.log(game)
+        if(game != "N/A"){
+          gameload(game)
+        }
+      })
+
+      socket.on('gamestarted', () => {
+        document.getElementById('status').innerHTML = 'started';
+      })
+
+      // Player lista kiíratás
+      socket.on('playerlist', playerlist => {
+        console.log(playerlist)
+        // Törli a mostani listát
+        document.getElementById('players').innerHTML = '';
+        // és kiíratja a jelenlegit
+
+        playerlist.forEach(playername => {
+          const playelement = document.createElement('div');
+          playelement.innerHTML = playername;
+          document.getElementById('players').appendChild(playelement);
+          console.log(playelement,playername)
+        });
+      });
+
+      // szoba start gomb nyomásakor
+      document.getElementById('startt').addEventListener('submit', function(event) {
+        event.preventDefault();
+        socket.emit('start');
+      });
+
+
+      socket.on("gamestart", game => {
+        gameload(game)
+})
+
+      // Join gomb lenyomáskor
+     function onloadfunc() {
+        // kikéri a szoba nevét
+        // request a szoba belépésre a szerver felé
+        socket.emit('joinRoom');
+      };
+
+      function gameload(game){
+        const gamediv = document.getElementById('game');
+        Object.values(game.players).forEach(gamee => {
+          console.log(gamee)
+          // console.log(gamee.players)
+          let playerdiv = document.createElement("div");
+          let playername = document.createElement('h2');
+          let playercards = document.createElement('h2');
+          playername.append(gamee.name)
+          playercards.append(gamee.cards)
+          document.body.innerHTML += "<div>" + gamee.name + gamee.cards +  "</div>"
+        });
+      }
+
+    </script>
+
+    <script>
+        onloadfunc()
+    </script>
+
+</body>
+</html>

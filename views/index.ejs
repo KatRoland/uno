@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Game Lobby</title>
+    <!-- <link rel="stylesheet" href="style.css"> -->
+  </head>
+  <body>
+    <h1>Game Lobby</h1>
+    <div id="room-list"></div>
+    <form id="create-room-form" action="/createroom" method="POST">
+      <input type="text" id="room-name-input" name="roomName" placeholder="Szoba neve">
+      <button type="submit" id="createbutton">Létrehozás</button>
+    </form>
+
+    <div id="players"></div>
+
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+      const socket = io();
+
+      // Szoba lista updatekor
+      socket.on('roomList', function(roomList) {
+        // Törli a mostani listát
+        document.getElementById('room-list').innerHTML = '';
+        // és kiíratja a jelenlegit
+        roomList.forEach(function(roomName) {
+          const roomElement = document.createElement('div');
+          roomElement.innerHTML = roomName;
+          document.getElementById('room-list').appendChild(roomElement);
+        });
+      });
+
+
+      console.log(document.getElementById("createbutton"))
+
+    </script>
+  </body>
+</html>
