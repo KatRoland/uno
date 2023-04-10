@@ -234,7 +234,10 @@ socket.on('start', function () {
 
 })
 
-//game loop
+//?game loop
+
+//kártya használás
+
 socket.on("usecard", (card,gameid) =>{
   let game = games[gameid];
   console.log(gameid)

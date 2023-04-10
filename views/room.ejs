@@ -9,10 +9,12 @@
 <body>
     <h1 id="roomid"></h1>
     <h1 id="owner"></h1>
+    <h1 id="currentplayer"></h1>
+    <h1 id="currentcard"></h1>
     <div id="players"></div>
-    <form id="startt">
-        <button type="submit">startt</button>
-      </form>
+    <div id="startt">
+        <button id="startbtn" type="submit">startt</button>
+    </div>
 
       
     <div id="status"></div>
@@ -24,15 +26,21 @@
 
       const socket = io();
 
+      var gameid;
+
       socket.on('roomload', (room,roomname, game) => {
         document.getElementById('roomid').innerHTML = `Room Name: ${roomname}`;
         document.getElementById('owner').innerHTML = `Owner: ${room.owner}`;
         document.getElementById('status').innerHTML = `${room.status}`;
-        console.log(game)
         if(game != "N/A"){
-          gameload(game)
+          console.log(game)
+        document.getElementById('currentplayer').innerHTML = `currentplayer: ${game.currentplayer}`;
+        document.getElementById('currentcard').innerHTML = `${game.currentcard}`;
+        gameid = game.personaldata.gameid;
+          gameload(game, game.personaldata)
         }
       })
+
 
       socket.on('gamestarted', () => {
         document.getElementById('status').innerHTML = 'started';
@@ -54,35 +62,98 @@
       });
 
       // szoba start gomb nyomásakor
-      document.getElementById('startt').addEventListener('submit', function(event) {
+      document.getElementById('startt').addEventListener('click', function(event) {
         event.preventDefault();
         socket.emit('start');
       });
 
 
-      socket.on("gamestart", game => {
-        gameload(game)
+      socket.on("gamestart", (personal, game) => {
+        document.getElementById("startbtn").style.display = "none"
+        gameid = personal.gameid;
+        console.log(gameid)
+        console.log("game:")
+        console.log(game)
+        console.log("personal:")
+        console.log(personal)
+        console.log("-----started---------")
+        gameload(game, personal)
 })
+
+      socket.on("reload", (player,game) => {
+        document.getElementById('currentplayer').innerHTML = `currentplayer: ${game.currentplayer}`;
+        document.getElementById('currentcard').innerHTML = `${game.currentcard}`;
+
+
+        const gamediv = document.getElementById('game');
+        gamediv.innerHTML = ""
+          console.log(game)
+          // console.log(player.players)
+          let playerdiv = document.createElement("div");
+          let playername = document.createElement('h2');
+          let playercards = document.createElement('div');
+          playername.append(player.name)
+          player.cards.forEach(card => {
+            let cardelement = document.createElement('h4')
+            cardelement.textContent = card
+            cardelement.classList.add("card")
+            console.log(cardelement)
+            playercards.append(cardelement)
+          })
+          playerdiv.append(playername)
+          playerdiv.append(playercards)
+          gamediv.append(playerdiv)
+          card_decl()
+
+      })
 
       // Join gomb lenyomáskor
      function onloadfunc() {
         // kikéri a szoba nevét
         // request a szoba belépésre a szerver felé
         socket.emit('joinRoom');
+        card_decl()
       };
 
-      function gameload(game){
+      function gameload(game, personal){
+
+        document.getElementById('currentplayer').innerHTML = `currentplayer: ${game.currentplayer}`;
+        document.getElementById('currentcard').innerHTML = `${game.currentcard}`;
+
         const gamediv = document.getElementById('game');
-        Object.values(game.players).forEach(gamee => {
-          console.log(gamee)
-          // console.log(gamee.players)
+          console.log(game)
+          console.log(personal)
+          // console.log(player.players)
           let playerdiv = document.createElement("div");
           let playername = document.createElement('h2');
-          let playercards = document.createElement('h2');
-          playername.append(gamee.name)
-          playercards.append(gamee.cards)
-          document.body.innerHTML += "<div>" + gamee.name + gamee.cards +  "</div>"
-        });
+          let playercards = document.createElement('div');
+          playername.append(personal.playerinfo.name)
+          personal.playerinfo.cards.forEach(card => {
+            let cardelement = document.createElement('h4')
+            cardelement.textContent = card
+            cardelement.classList.add("card")
+            console.log(cardelement)
+            playercards.append(cardelement)
+          })
+          playerdiv.append(playername)
+          playerdiv.append(playercards)
+          gamediv.append(playerdiv)
+          card_decl()
+        };
+      
+
+      function carduse(card){
+        socket.emit("usecard", card, gameid)
+      }
+
+      function card_decl(){
+        const cards = document.querySelectorAll(".card");
+
+        cards.forEach(card => {
+          card.addEventListener("click", (event) => {
+            carduse(event.target.textContent)
+          })
+        })
       }
 
     </script>
