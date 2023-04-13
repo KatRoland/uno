@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <title>Document</title>
 </head>
 <body>
+
     <h1 id="roomid"></h1>
     <h1 id="owner"></h1>
     <h1 id="currentplayer"></h1>
@@ -19,7 +21,20 @@
       
     <div id="status"></div>
 
+    <div id="opponents"></div>
+
+    <div id="colorselect">
+      <button id="p">Piros</button>
+      <button id="k">Kék</button>
+      <button id="z">Zöld</button>
+      <button id="s">Sárga</button>
+    </div>
+
     <div id="game"></div>
+
+    <h1 id="pending"></h1>
+
+    <button id="draw">Draw</button>
 
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script>
@@ -32,8 +47,10 @@
         document.getElementById('roomid').innerHTML = `Room Name: ${roomname}`;
         document.getElementById('owner').innerHTML = `Owner: ${room.owner}`;
         document.getElementById('status').innerHTML = `${room.status}`;
+        document.getElementById("colorselect").style.display = "none"
         if(game != "N/A"){
-          console.log(game)
+        document.getElementById("startbtn").style.display = "none"
+        console.log(game)
         document.getElementById('currentplayer').innerHTML = `currentplayer: ${game.currentplayer}`;
         document.getElementById('currentcard').innerHTML = `${game.currentcard}`;
         gameid = game.personaldata.gameid;
@@ -70,6 +87,7 @@
 
       socket.on("gamestart", (personal, game) => {
         document.getElementById("startbtn").style.display = "none"
+        document.getElementById("colorselect").style.display = "none"
         gameid = personal.gameid;
         console.log(gameid)
         console.log("game:")
@@ -80,7 +98,7 @@
         gameload(game, personal)
 })
 
-      socket.on("reload", (player,game) => {
+      socket.on("reload", (player, game, status) => {
         document.getElementById('currentplayer').innerHTML = `currentplayer: ${game.currentplayer}`;
         document.getElementById('currentcard').innerHTML = `${game.currentcard}`;
 
@@ -105,6 +123,43 @@
           gamediv.append(playerdiv)
           card_decl()
 
+
+          const pending = document.getElementById("pending");
+          if(status == "selecting"){
+            pending.textContent = `${game.currentplayer} színt választ!`
+          } else {
+            pending.textContent = ``
+          }
+
+          console.log("----------opponet--------------")
+          console.log(game)
+
+          const opponentsdiv = document.getElementById("opponents");
+          opponentsdiv.innerHTML = ""
+          Object.values(game.opponents).forEach(opponent => {
+            let opponentdiv = document.createElement("div");
+            let opponentdetails = document.createElement("h2");
+            opponentdetails.textContent = `${opponent.name}: ${opponent.cards}`
+            opponentdiv.append(opponentdetails)
+            opponentsdiv.append(opponentdiv)
+          })
+
+          if(player.name == game.currentplayer && player.cards.filter(card =>  card[1] == "a" || card[0] == game.currentcard[0] || card[1] == game.currentcard[1]).length == 0){
+            document.getElementById("draw").style.display = "block"
+          } else {
+            document.getElementById("draw").style.display = "none"
+          }
+
+      })
+
+      socket.on("selectcolor", () => {
+        console.log("selectcolor")
+        const colorselectdiv = document.getElementById("colorselect");
+        colorselectdiv.style.display = "block"
+      })
+
+      socket.on("quit", () => {
+        window.location.replace("/")
       })
 
       // Join gomb lenyomáskor
@@ -112,7 +167,9 @@
         // kikéri a szoba nevét
         // request a szoba belépésre a szerver felé
         socket.emit('joinRoom');
-        card_decl()
+        card_decl();
+        color_select_decl();
+        draw_decl();
       };
 
       function gameload(game, personal){
@@ -139,6 +196,26 @@
           playerdiv.append(playercards)
           gamediv.append(playerdiv)
           card_decl()
+
+
+          const opponentsdiv = document.getElementById("opponents");
+          if(game.opponents){
+          Object.values(game.opponents).forEach(opponent => {
+            let opponentdiv = document.createElement("div");
+            let opponentdetails = document.createElement("h2");
+            opponentdetails.textContent = `${opponent.name}: ${opponent.cards}`
+            opponentdiv.append(opponentdetails)
+            opponentsdiv.append(opponentdiv)
+          })
+        }
+          console.log(personal.playerinfo.name)
+
+          if(personal.playerinfo.name == game.currentplayer && personal.playerinfo.cards.filter(card =>  card[1] == "a" || card[0] == game.currentcard[0] || card[1] == game.currentcard[1]).length == 0 ){
+            document.getElementById("draw").style.display = "block"
+          } else {
+            document.getElementById("draw").style.display = "none"
+          }
+
         };
       
 
@@ -154,6 +231,30 @@
             carduse(event.target.textContent)
           })
         })
+      }
+
+      function color_select_decl(){
+        const colorselectdiv = document.getElementById("colorselect");
+        colorselectdiv.style.display = "none"
+        const buttons = colorselectdiv.querySelectorAll("button");
+
+        buttons.forEach(button => {
+          button.addEventListener("click", (event) => {
+            const color = event.target.id
+            const pending = document.getElementById("pending");
+            pending.textContent = ``
+            const colorselectdiv = document.getElementById("colorselect");
+            colorselectdiv.style.display = "none"
+            socket.emit("colorselected", color, gameid)
+          })
+        })
+      }
+
+      function draw_decl(){
+        document.getElementById("draw").addEventListener("click", () => {
+          console.log("123")
+          socket.emit("drawcard", gameid)
+        } )
       }
 
     </script>
