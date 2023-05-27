@@ -8,8 +8,9 @@ const {cardgen, startgen} = require("./cards")
 
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: 'false' }))
-app.use(express.json())
+app.use(express.json());
 app.use(cookieParser());
+app.use(express.static(__dirname + '/views'));
 
 var nickname;
 
@@ -551,30 +552,6 @@ socket.on("usecard", (card,gameid) =>{
 
       return;
       }
-      
-      // game.currentcard = card;
-      // let cardindex = game.players[socket.nickname].cards.indexOf(card)
-      // game.players[socket.nickname].cards.splice(cardindex,1)
-      // let nextplayer;
-
-      // let currentplayer = game.order.indexOf(socket.nickname);
-      // if(!(game.order[currentplayer+1])){
-      //   game.currentplayer = game.order[0]
-      // } else {
-      //   game.currentplayer = game.order[currentplayer+1]
-      // }
-
-      // Object.values(games[gameid].players).forEach(player => {
-      //   // console.log(player)
-      //   console.log("----------------")
-      //   let game = {currentcard: games[gameid].currentcard, currentplayer: games[gameid].currentplayer};
-      //   console.log(player)
-      //   console.log("----------------")
-      //   console.log(player.id)
-      //   io.to(player.id).emit('reload', player, game);
-      // });
-    
-
 
     }
   }
@@ -650,6 +627,9 @@ app.post("/createroom", (req,res) => {
   }
 })
 
-server.listen(3000, function() {
-  console.log('Listening on http://localhost:3000');
+let port = 5555
+
+server.listen(port, function() {
+  console.log(`Listening on http://localhost:${port}`);
 });
+
