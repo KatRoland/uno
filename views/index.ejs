@@ -25,8 +25,9 @@
         document.getElementById('room-list').innerHTML = '';
         // és kiíratja a jelenlegit
         roomList.forEach(function(roomName) {
-          const roomElement = document.createElement('div');
+          const roomElement = document.createElement('a');
           roomElement.innerHTML = roomName;
+          roomElement.href= `/room/${roomName}`
           document.getElementById('room-list').appendChild(roomElement);
         });
       });
