@@ -84,6 +84,9 @@
       socket.on('win', (winner) => {
         document.getElementById("owncards").innerHTML = ""
         document.getElementById("owncards").innerHTML = `Nyertes: ${winner}`
+        
+        setTimeout(()  => location.reload(), 5000 )
+        
       })
 
 
@@ -209,6 +212,10 @@
       })
 
       socket.on("quit", () => {
+        window.location.replace("/")
+      })
+
+      socket.on("isstarted", () => {
         window.location.replace("/")
       })
 
