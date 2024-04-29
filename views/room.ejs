@@ -10,8 +10,24 @@
     <style>
       #colorselect{
         position: absolute;
-        top: 50%;
+        top: 10%;
         left: 50%;
+        width: 40%;
+        height: 30%;
+        -webkit-backdrop-filter: blur(3px);
+        backdrop-filter: blur(3px);
+        z-index: 5;
+        background-color: rgb(230, 220, 220);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #colorselect > button {
+        z-index: 6;
+        width: 40%;
+        height: 50px;
       }
 
       #order{
@@ -25,15 +41,15 @@
 </head>
 <body>
 
-    <h1 id="pendingcard"></h1>
+    <!-- <h1 id="pendingcard"></h1> -->
     <h1 id="roomid"></h1>
     <h1 id="owner"></h1>
     <h1 id="currentplayer"></h1>
-    <img width="150px" height="217.5px" id="currentcard"></img>
-    <div id="players"></div>
+    <img id="currentcard"></img>
     <div id="startt">
         <button id="startbtn" type="submit">startt</button>
     </div>
+    <div style="display: flex;" id="playerlist"></div>
 
     <div id="order"></div>
       
@@ -41,18 +57,24 @@
 
     <div id="opponents"></div>
 
+
     <div id="colorselect">
-      <button id="p">Piros</button>
-      <button id="k">Kék</button>
-      <button id="z">Zöld</button>
-      <button id="s">Sárga</button>
+      <button style="background-color: red;" id="p">Piros</button>
+      <button style="background-color: blue;" id="k">Kék</button>
+      <button style="background-color: green;" id="z">Zöld</button>
+      <button style="background-color: yellow;" id="s">Sárga</button>
     </div>
 
-    <div id="game"></div>
 
     <h1 id="pending"></h1>
 
     <button id="draw">Draw</button>
+
+    <div id="game"></div>
+
+
+    <!-- <div id="players" class="players"></div> -->
+
 
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script>
@@ -62,20 +84,21 @@
       var gameid;
 
       socket.on('roomload', (room,roomname, game) => {
-        document.getElementById('roomid').innerHTML = `Room Name: ${roomname}`;
-        document.getElementById('owner').innerHTML = `Owner: ${room.owner}`;
+        // document.getElementById('roomid').innerHTML = `Room Name: ${roomname}`;
+        //document.getElementById('owner').innerHTML = `Owner: ${room.owner}`;
         document.getElementById('status').innerHTML = `${room.status}`;
         document.getElementById("colorselect").style.display = "none"
         if(game != "N/A"){
-        document.getElementById("startbtn").style.display = "none"
-        console.log(game)
+        //document.getElementById("startbtn").style.display = "none"
+        //console.log(game)
         document.getElementById('currentplayer').innerHTML = `currentplayer: ${game.currentplayer}`;
-        document.getElementById('pendingcard').innerHTML = `pending: ${game.pendingcards}`;
+        //document.getElementById('pendingcard').innerHTML = `pending: ${game.pendingcards}`;
         document.getElementById('currentcard').src = `../cards/${game.currentcard}.png`;
         document.getElementById("order").innerHTML = `order: ${game.order}`
         console.log(game)
         
         gameid = game.personaldata.gameid;
+        console.log(`GAME: ${JSON.stringify(game)}`)
           gameload(game, game.personaldata)
         }
       })
@@ -98,25 +121,28 @@
       socket.on('playerlist', playerlist => {
         console.log(playerlist)
         // Törli a mostani listát
-        document.getElementById('players').innerHTML = '';
+        document.getElementById('playerlist').innerHTML = '';
         // és kiíratja a jelenlegit
 
         playerlist.forEach(playername => {
-          const playelement = document.createElement('div');
-          playelement.innerHTML = playername;
-          document.getElementById('players').appendChild(playelement);
+          const playelement = document.createElement('p');
+          playelement.textContent =  `${playername} ,`;
+          document.getElementById('playerlist').appendChild(playelement);
           console.log(playelement,playername)
         });
       });
 
       // szoba start gomb nyomásakor
       document.getElementById('startt').addEventListener('click', function(event) {
+        document.getElementById('startt').style.display = "none"
         event.preventDefault();
         socket.emit('start');
       });
 
 
       socket.on("gamestart", (personal, game) => {
+        document.getElementById('startt').style.display = "none"
+
         document.getElementById("startbtn").style.display = "none"
         document.getElementById("colorselect").style.display = "none"
         gameid = personal.gameid;
@@ -131,8 +157,10 @@
 
       socket.on("reload", (player, game, status) => {
         console.log(game)
+        document.getElementById('startt').style.display = "none"
+
         document.getElementById('currentplayer').innerHTML = `currentplayer: ${game.currentplayer}`;
-        document.getElementById('pendingcard').innerHTML = `pending: ${game.pendingcards}`;
+        //document.getElementById('pendingcard').innerHTML = `pending: ${game.pendingcards}`;
         document.getElementById("order").innerHTML = `order: ${game.order}`
         console.log(game)
 
@@ -144,14 +172,10 @@
           console.log(game)
           // console.log(player.players)
           let playerdiv = document.createElement("div");
-          let playername = document.createElement('h2');
           let playercards = document.createElement('div');
-          playername.append(player.name)
           player.cards.forEach(card => {
             let cardelement = document.createElement('img')
             cardelement.src = `../cards/${card}.png`
-            cardelement.width = 150;
-            cardelement.height= 217.5;
             cardelement.alt = `${card}`
             cardelement.classList.add("card")
             console.log(cardelement)
@@ -159,11 +183,10 @@
             playercards.classList.add("owncards")
             playercards.setAttribute('id', 'owncards')
           })
-          playerdiv.append(playername)
           playerdiv.append(playercards)
           gamediv.append(playerdiv)
           card_decl()
-          document.getElementById('pendingcard').innerHTML = `pending: ${game.pendingcards}`;
+          //document.getElementById('pendingcard').innerHTML = `pending: ${game.pendingcards}`;
 
 
           const pending = document.getElementById("pending");
@@ -180,11 +203,12 @@
           opponentsdiv.innerHTML = ""
           Object.values(game.opponents).forEach(opponent => {
             let opponentdiv = document.createElement("div");
-            let opponentdetails = document.createElement("h2");
+            let opponentdetails = document.createElement("h4");
             let opponentcards = document.createElement('div');
             opponentcards.classList.add("opponentcardlist")
-            opponentdetails.textContent = `${opponent.name}: ${opponent.cards}`
-            for(let i = 0; i < opponent.cards;i++){
+            opponentdetails.textContent = `${opponent.name}:`
+            if(opponent.cards > 5) {
+              for(let i = 0; i < opponent.cards-(opponent.cards-5);i++){
               let card = document.createElement('img');
               card.src = "../cards/ph.png"
               card.width = 75;
@@ -192,6 +216,22 @@
               card.classList.add("placeholder")
               opponentcards.append(card)
             }
+
+            let cardtext = document.createElement("p");
+            cardtext.textContent = `+${opponent.cards-5}`
+
+            opponentcards.append(cardtext)
+            } else {
+              for(let i = 0; i < opponent.cards;i++){
+              let card = document.createElement('img');
+              card.src = "../cards/ph.png"
+              card.width = 75;
+              card.height= 108.75;
+              card.classList.add("placeholder")
+              opponentcards.append(card)
+            } 
+          }
+
             opponentdiv.append(opponentdetails)
             opponentdiv.append(opponentcards)
             opponentsdiv.append(opponentdiv)
@@ -205,10 +245,72 @@
 
       })
 
+      socket.on("spectatorreload", (game, status) => {
+        console.log(game)
+        document.getElementById('currentplayer').innerHTML = `currentplayer: ${game.currentplayer}`;
+        //document.getElementById('pendingcard').innerHTML = `pending: ${game.pendingcards}`;
+        document.getElementById("order").innerHTML = `order: ${game.order}`
+        console.log(game)
+
+        document.getElementById('currentcard').src = `../cards/${game.currentcard}.png`;
+
+
+        const gamediv = document.getElementById('game');
+        gamediv.innerHTML = ""
+          console.log(game)
+          // console.log(player.players)
+
+          //document.getElementById('pendingcard').innerHTML = `pending: ${game.pendingcards}`;
+
+
+          const pending = document.getElementById("pending");
+          if(status == "selecting"){
+            pending.textContent = `${game.currentplayer} színt választ!`
+          } else {
+            pending.textContent = ``
+          }
+
+          console.log("----------opponet--------------")
+          console.log(game)
+
+          //const playersdiv = document.getElementById("players");
+          playersdiv.innerHTML = ""
+          Object.values(game.players).forEach(player => {
+            let playerdiv = document.createElement("div");
+            playerdiv.classList.add("player")
+            let playerdetails = document.createElement("h2");
+            let playercards = document.createElement('div');
+            playercards.classList.add("playercardlist")
+            playerdetails.textContent = `${player.name}:`
+            // for(let i = 0; i < opponent.cards;i++){
+            //   let card = document.createElement('img');
+            //   card.src = "../cards/ph.png"
+            //   card.width = 75;
+            //   card.height= 108.75;
+            //   card.classList.add("placeholder")
+            //   opponentcards.append(card)
+            // }
+
+            player.cards.forEach(card => {
+              let cardimg = document.createElement('img');
+              cardimg.src = `../cards/${card}.png`
+              cardimg.classList.add("card")
+              playercards.append(cardimg)
+            })
+
+            playerdiv.append(playerdetails)
+            playerdiv.append(playercards)
+            playersdiv.append(playerdiv)
+          })
+
+      })
+
+
+
       socket.on("selectcolor", () => {
         console.log("selectcolor")
         const colorselectdiv = document.getElementById("colorselect");
-        colorselectdiv.style.display = "block"
+        colorselectdiv.style.display = "flex"
       })
 
       socket.on("quit", () => {
@@ -231,11 +333,27 @@
 
       function gameload(game, personal){
 
+        console.log(`PERSONAL: ${JSON.stringify(personal.playerinfo.name)}`)
+        console.log(`PERSONAL: ${JSON.stringify(game)}`)
+        document.getElementById('startt').style.display = "none"
+
+        const pending = document.getElementById("pending");
+          if(game.status == "selecting"){
+            if(personal.playerinfo.name == game.currentplayer) {
+              const colorselectdiv = document.getElementById("colorselect");
+              colorselectdiv.style.display = "flex"
+            }
+            pending.textContent = `${game.currentplayer} színt választ!`
+          } else {
+            pending.textContent = ``
+          }
+          
+
         document.getElementById('currentplayer').innerHTML = `currentplayer: ${game.currentplayer}`;
         document.getElementById('currentcard').src = `../cards/${game.currentcard}.png`;
 
         const gamediv = document.getElementById('game');
-        document.getElementById('pendingcard').innerHTML = `pending: ${game.pendingcards}`;
+        //document.getElementById('pendingcard').innerHTML = `pending: ${game.pendingcards}`;
 
           console.log(game)
           console.log(personal)
@@ -245,14 +363,11 @@
 
 
           let playerdiv = document.createElement("div");
-          let playername = document.createElement('h2');
           let playercards = document.createElement('div');
-          playername.append(personal.playerinfo.name)
           personal.playerinfo.cards.forEach(card => {
             let cardelement = document.createElement('img')
             cardelement.src = `../cards/${card}.png`
-            cardelement.width = 150;
-            cardelement.height= 217.5;
+
             cardelement.alt = `${card}`
             cardelement.classList.add("card")
             console.log(cardelement)
@@ -261,21 +376,24 @@
             playercards.setAttribute('id', 'owncards')
 
           })
-          playerdiv.append(playername)
           playerdiv.append(playercards)
           gamediv.append(playerdiv)
           card_decl()
 
 
+          console.log("----------opponet--------------")
+          console.log(game)
+
           const opponentsdiv = document.getElementById("opponents");
-          if(game.opponents){
+          opponentsdiv.innerHTML = ""
           Object.values(game.opponents).forEach(opponent => {
             let opponentdiv = document.createElement("div");
-            let opponentdetails = document.createElement("h2");
+            let opponentdetails = document.createElement("h4");
             let opponentcards = document.createElement('div');
             opponentcards.classList.add("opponentcardlist")
-            opponentdetails.textContent = `${opponent.name}: ${opponent.cards}`
-            for(let i = 0; i < opponent.cards;i++){
+            opponentdetails.textContent = `${opponent.name}:`
+            if(opponent.cards > 5) {
+              for(let i = 0; i < opponent.cards-(opponent.cards-5);i++){
               let card = document.createElement('img');
               card.src = "../cards/ph.png"
               card.width = 75;
@@ -283,11 +401,26 @@
               card.classList.add("placeholder")
               opponentcards.append(card)
             }
+
+            let cardtext = document.createElement("p");
+            cardtext.textContent = `+${opponent.cards-5}`
+
+            opponentcards.append(cardtext)
+            } else {
+              for(let i = 0; i < opponent.cards;i++){
+              let card = document.createElement('img');
+              card.src = "../cards/ph.png"
+              card.width = 75;
+              card.height= 108.75;
+              card.classList.add("placeholder")
+              opponentcards.append(card)
+            } 
+          }
+
             opponentdiv.append(opponentdetails)
             opponentdiv.append(opponentcards)
             opponentsdiv.append(opponentdiv)
           })
-        }
           console.log(personal.playerinfo.name)
 
           if(personal.playerinfo.name == game.currentplayer && personal.playerinfo.cards.filter(card =>  card[1] == "a" || card[0] == game.currentcard[0] || card[1] == game.currentcard[1]).length == 0 ){
@@ -321,6 +454,7 @@
 
         buttons.forEach(button => {
           button.addEventListener("click", (event) => {
+            console.log(`GAMEID: ${gameid}`)
             const color = event.target.id
             const pending = document.getElementById("pending");
             pending.textContent = ``

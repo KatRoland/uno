@@ -85,7 +85,7 @@ app.post("/setusername", function(req,res) {
 // Kliens csatlakozáskor
 io.on('connection', function(socket) {
   console.log('A user connected, id: ' + socket.id);
-  console.log(socket);
+  //console.log(socket);
   var cookies = cookie.parse(socket.handshake.headers.cookie);
   if(cookies.username){
     socket.nickname = cookies.username
@@ -108,12 +108,42 @@ io.on('connection', function(socket) {
   socket.on('joinRoom', () => {
     // vizsgálat
 // rooms[rname].players
-    if(rooms[rname].status == "started") {
-      socket.to(socket.id).emit("isstarted")
-      return
-    }
+    if(Object.keys(rooms).includes(rname) && rooms[rname].status == "started" && !Object.keys(games[Object.keys(games).filter(i => games[i].room === rname)].players).includes(socket.nickname)) {
+      //io.to(socket.id).emit("isstarted")
+      let gameid = Object.keys(games).filter(i => games[i].room === rname)
+      console.log("\n\n\n\n\n\n\n")
+      console.log(gameid)
+
+                
+                  games[gameid].spectators[socket.nickname] = {name: socket.nickname, id: socket.id}
+
+                  
+                Object.values(games[gameid].spectators).forEach(spectator => {
+                  // console.log(player)
+                  console.log("----------------")
+                // let game = {currentcard: games[gameid].currentcard, currentplayer: games[gameid].currentplayer, pendingcards: games[gameid].pendingcard, order: games[gameid].order, next: games[gameid].order[games[gameid].order.indexOf(games[gameid].currentcard) + 1] ? games[gameid].order[games[gameid].order.indexOf(games[gameid].currentcard) + 1] : games[gameid].order[0] };
+                  // game.opponents = {}
+      
+      
+                  // console.log(player)
+                  console.log("----------------")
+                  // console.log(player.id)
+                  // console.log(games[gameid].currentplayer)
+                  io.to(spectator.id).emit('spectatorreload', games[gameid],games[gameid].status);
+                  // console.log(player.name)
+                });
+                
+
+                
+
+      
+    } 
+    else {
+
+    
 
       if(rooms[rname] && !(Object.keys(rooms[rname].players).includes(socket.nickname))){
+        console.log("TESZT SZÖVEG")
         console.log(socket.id)
       // Belépés a szobába
       socket.join(rname);
@@ -129,7 +159,7 @@ io.on('connection', function(socket) {
           console.log(game)
           let player = Object.values(games[gamename].players).filter(player => player.name === socket.nickname)
           if(game.room == socket.room){
-            roomgame = {personaldata: {playerinfo: player[0], gameid: gamename},currentcard: game.currentcard, currentplayer: game.currentplayer};
+            roomgame = {personaldata: {playerinfo: player[0], gameid: gamename},currentcard: game.currentcard, currentplayer: game.currentplayer, status: game.status};
             roomgame.opponents = {};
             
             console.log("é.é.é.é.")
@@ -137,7 +167,7 @@ io.on('connection', function(socket) {
             player = player[0]
             Object.values(games[gamename].players).forEach(opponent => {
               console.log(opponent.name == player.name, opponent.name, player.name)
-              if(opponent.name == player.name) {
+              if(opponent.name == socket.nickname) {
                 return;
               }
               roomgame.opponents[opponent.name] = {name: opponent.name, cards: opponent.cards.length};
@@ -172,15 +202,16 @@ io.on('connection', function(socket) {
           console.log(player)
 
             if(game.room == socket.room){
-              roomgame = {personaldata: {playerinfo: player[0], gameid: gamename},currentcard: game.currentcard, currentplayer: game.currentplayer};
+              game.players[socket.nickname].id = socket.id
+              roomgame = {personaldata: {playerinfo: player[0], gameid: gamename},currentcard: game.currentcard, currentplayer: game.currentplayer, status: game.status};
               roomgame.opponents = {};
 
-              Object.values(games[gameid].players).forEach(opponent => {
-                if(opponent.name == player.name) {
+              Object.values(games[gamename].players).forEach(opponent => {
+                if(opponent.name == socket.nickname) {
                   return;
                 }
                 roomgame.opponents[opponent.name] = {name: opponent.name, cards: opponent.cards.length};
-                console.log(game.opponents[opponent.name]);
+                console.log(roomgame.opponents[opponent.name]);
               });
 
               break;
@@ -189,7 +220,6 @@ io.on('connection', function(socket) {
         } else {
           roomgame = "N/A"
         }
-        socket.emit('roomload', rooms[socket.room], socket.room, roomgame);
 
 
         socket.emit('roomload', rooms[socket.room], socket.room,roomgame);
@@ -198,7 +228,7 @@ io.on('connection', function(socket) {
       else{
         socket.emit('joinError')
       }
-
+    }
   });
 
 socket.on('start', function () {
@@ -213,9 +243,10 @@ socket.on('start', function () {
   games[gameid].id = gameid; 
   games[gameid].room = socket.room;
   games[gameid].players = {};
+  games[gameid].spectators = {}
   Object.values(rooms[rname].players).forEach(player => {
     console.log(player);
-    games[gameid].players[player.Name] = {id: player.id ,name: player.Name, cards: cardgen(5)};
+    games[gameid].players[player.Name] = {id: player.id ,name: player.Name, cards: [...cardgen(5),"aa"]};
   });
 
   games[gameid].currentcard = startgen();
@@ -260,12 +291,6 @@ socket.on('start', function () {
 
 })
 
-//?game loop
-
-//kártya használás
-
-//!nyerés figyelés --||--
-
 socket.on("drawcard", async (gameid) => {
 
   console.log(gameid)
@@ -290,7 +315,7 @@ socket.on("drawcard", async (gameid) => {
         console.log(game.opponents[opponent.name]);
       });
       console.log(player)
-      console.log("----------------")
+      console.log("---------..................................-------")
       console.log(player.id)
       io.to(player.id).emit('reload', player, game, "ok");
     
@@ -299,7 +324,11 @@ socket.on("drawcard", async (gameid) => {
   } 
 })
 
+//todo + kártyára nem + kártyakor nem adja a lpot
+//todo +4 után 2-re lehet stackelni 
+
 socket.on("usecard", (card,gameid) =>{
+  console.log("KÁRTYA HASZNÁLVA")
   if(!Object.keys(games).includes(gameid)) {
     return;
   }
@@ -331,6 +360,7 @@ socket.on("usecard", (card,gameid) =>{
         let cardindex = game.players[socket.nickname].cards.indexOf(card)
         game.players[socket.nickname].cards.splice(cardindex,1)
         const status = "selecting"
+        games[gameid].status = "selecting"
   
         Object.values(games[gameid].players).forEach(player => {
           // console.log(player)
@@ -356,61 +386,7 @@ socket.on("usecard", (card,gameid) =>{
           }
         });
 
-        socket.on("colorselected", (color, gameid) => {
-          let game = games[gameid];
-          game.currentcard = color + "a";
-
-        let currentplayer = game.order.indexOf(socket.nickname);
-          if(!(game.order[currentplayer+1])){
-            game.currentplayer = game.order[0]
-          } else {
-            game.currentplayer = game.order[currentplayer+1]
-          }
-
-          console.log(game)
-          console.log(game.players)
-          console.log(game.players[game.currentplayer])
-
-          if(game.players[game.currentplayer].cards.filter(card =>  card[1] == "a" || card == `${color}k`).length > 0){
-            game.pendingcard += 4;
-          } else {
-            game.pendingcard += 4;
-            game.players[game.currentplayer].cards.push(...cardgen(game.pendingcard));
-            game.pendingcard = 0;
-          }
-
-          console.log(game.players[game.currentplayer])
-
-          const status = "ok"
-
-          Object.values(games[gameid].players).forEach(player => {
-            // console.log(player)
-            console.log("----------------")
-          let game = {currentcard: games[gameid].currentcard, currentplayer: games[gameid].currentplayer, pendingcards: games[gameid].pendingcard, order: games[gameid].order, next: games[gameid].order[games[gameid].order.indexOf(games[gameid].currentcard) + 1] ? games[gameid].order[games[gameid].order.indexOf(games[gameid].currentcard) + 1] : games[gameid].order[0] };
-            game.opponents = {}
-
-
-            Object.values(games[gameid].players).forEach(opponent => {
-              if(opponent.name == player.name) {
-                return;
-              }
-              game.opponents[opponent.name] = {name: opponent.name, cards: opponent.cards.length};
-              console.log(game.opponents[opponent.name]);
-            });
-
-            console.log(game.opponents);
-
-            console.log(player)
-            console.log("----------------")
-            console.log(player.id)
-            console.log(games[gameid].currentplayer)
-            io.to(player.id).emit('reload', player, game,status);
-            console.log(player.name)
-          });
-
-          return;
-
-        })
+        return
 
       }
 
@@ -419,6 +395,8 @@ socket.on("usecard", (card,gameid) =>{
         game.currentcard = card;
         let cardindex = game.players[socket.nickname].cards.indexOf(card)
         game.players[socket.nickname].cards.splice(cardindex,1)
+        games[gameid].status = "ok"
+
         const status = "ok"
 
   
@@ -469,6 +447,8 @@ socket.on("usecard", (card,gameid) =>{
         game.currentcard = card;
         let cardindex = game.players[socket.nickname].cards.indexOf(card)
         game.players[socket.nickname].cards.splice(cardindex,1)
+        games[gameid].status = "ok"
+
         const status = "ok"
 
         game.order = game.order.reverse()
@@ -512,6 +492,8 @@ socket.on("usecard", (card,gameid) =>{
         game.currentcard = card;
         let cardindex = game.players[socket.nickname].cards.indexOf(card)
         game.players[socket.nickname].cards.splice(cardindex,1)
+        games[gameid].status = "ok"
+
         const status = "ok"
         
         console.log(game.order)
@@ -557,6 +539,8 @@ socket.on("usecard", (card,gameid) =>{
         game.currentcard = card;
         let cardindex = game.players[socket.nickname].cards.indexOf(card)
         game.players[socket.nickname].cards.splice(cardindex,1)
+        games[gameid].status = "ok"
+
         const status = "ok"
 
 
@@ -601,6 +585,67 @@ console.log(game)
 
 
 
+
+})
+
+socket.on("colorselected", (color, gameid) => {
+  console.log(`COLOR SELECTED: ${gameid}`)
+  if(games[gameid].status != "selecting") {return}
+  games[gameid].status = "ok"
+  
+  let game = games[gameid];
+  game.currentcard = color + "a";
+
+let currentplayer = game.order.indexOf(socket.nickname);
+  if(!(game.order[currentplayer+1])){
+    game.currentplayer = game.order[0]
+  } else {
+    game.currentplayer = game.order[currentplayer+1]
+  }
+
+  console.log(game)
+  console.log(game.players)
+  console.log(game.players[game.currentplayer])
+
+  if(game.players[game.currentplayer].cards.filter(card =>  card[1] == "a" || card == `${color}k`).length > 0){
+    game.pendingcard += 4;
+  } else {
+    game.pendingcard += 4;
+    game.players[game.currentplayer].cards.push(...cardgen(game.pendingcard));
+    game.pendingcard = 0;
+  }
+
+  console.log(game.players[game.currentplayer])
+
+  const status = "ok"
+
+  Object.values(games[gameid].players).forEach(player => {
+    // console.log(player)
+    console.log("----------------")
+  let game = {currentcard: games[gameid].currentcard, currentplayer: games[gameid].currentplayer, pendingcards: games[gameid].pendingcard, order: games[gameid].order, next: games[gameid].order[games[gameid].order.indexOf(games[gameid].currentcard) + 1] ? games[gameid].order[games[gameid].order.indexOf(games[gameid].currentcard) + 1] : games[gameid].order[0] };
+    game.opponents = {}
+
+
+    Object.values(games[gameid].players).forEach(opponent => {
+      if(opponent.name == player.name) {
+        return;
+      }
+      game.opponents[opponent.name] = {name: opponent.name, cards: opponent.cards.length};
+      console.log(game.opponents[opponent.name]);
+    });
+
+    console.log(game.opponents);
+
+    console.log(player)
+    console.log("----------------")
+    console.log(player.id)
+    console.log(games[gameid].currentplayer)
+    io.to(player.id).emit('reload', player, game,status);
+    console.log(player.name)
+  });
+
+  return;
+
 })
 
   // Ha a kliens bezárja az oldalt
@@ -612,8 +657,18 @@ console.log(game)
 
     let room = socket.room
 
+    setTimeout(() => {
 
+      console.log("tiemout")
+
+
+      //if(Object.values(users).includes(socket.nickname) && users[socket.nickname].path.includes(`room/${room}`) ) {
       
+
+      if(!JSON.stringify(Object.values(users)).includes(socket.nickname) ) {
+
+        console.log(`keres: ${JSON.stringify(Object.values(users))}`)
+
       // kilépteti a szóbából ha volt
       if(socket.room && socket.roomm != ""){
         if(rooms[socket.room]){
@@ -627,86 +682,91 @@ console.log(game)
       }
 
   delete users[socket.nickname]
+      } 
+      console.log(`kereső: ${users[socket.nickname].path} |||| ${room}`)
+  if(!users[socket.nickname].path.includes(`room/${room}` )) {
 
-setTimeout(() => {
+    if(rooms[room] != null && Object.keys(rooms[room].players).includes(socket.nickname)) {
+      delete rooms[room].players[socket.nickname]
+    }
 
-  if(Object.values(users).includes(socket.nickname) && !users[socket.nickname].path.includes(`room/${room}`) ) {
-    console.log(socket.request.headers.referer)
-    console.log(socket)
-    console.log(room)
-    return
-  }
+    console.log("EZ KELL")
+        console.log(Object.entries(rooms).filter(szoba => szoba[1].owner == socket.nickname ))
+        if(Object.entries(rooms).filter(szoba => szoba[1].owner == socket.nickname).length > 0) {
+          console.log("EZ IS KELL")
+                   let owned = Object.entries(rooms).filter(szoba => szoba[1].owner == socket.nickname )
+                   owned.forEach(element => {
+                     let players = []
+                     Object.values(element[1].players).forEach(player => { 
+                       players.push(player.Name)
+                     })
+                     console.log(`sokadik szar: ${players}`)
+                     if(!players.includes(element[1].owner)){
+                      console.log("EZ IS KELL MÉG")
 
-  console.log(Object.entries(rooms).filter(szoba => szoba[1].owner == socket.nickname ))
- if(Object.entries(rooms).filter(szoba => szoba[1].owner == socket.nickname).length > 0) {
-            let owned = Object.entries(rooms).filter(szoba => szoba[1].owner == socket.nickname )
-            owned.forEach(element => {
-              let players = []
-              Object.values(element[1].players).forEach(player => { 
-                players.push(player.Name)
-              })
-              if(!players.includes(element[1].owner)){
-                Object.values(element[1].players).forEach(player => { 
-                io.to(player.id).emit("quit");
-                })
-                delete rooms[element[0]]
-                delete games[ Object.keys(games).find(key => games[key].room === socket.room)               ]
-                Object.values(element[1].players).forEach(player => { 
-                  io.to(player.id).emit("quit");
-                })
+                       Object.values(element[1].players).forEach(player => { 
+                       io.to(player.id).emit("quit");
+                       })
+                       delete rooms[element[0]]
+                       delete games[ Object.keys(games).find(key => games[key].room === socket.room)               ]
+                       Object.values(element[1].players).forEach(player => { 
+                         io.to(player.id).emit("quit");
+                       })
+       
+                       io.in("lobby").emit('roomList', Object.keys(rooms));
+                     }
+       
+        
+                   })
+       
+                 }
+       
+                 else if(room != null && (Object.keys(games).filter(i => games[i].room === room)) != null) {
+                       
+                   console.log("\n\n\n\n socket kilépett")
+                   
+                   let game = games[ Object.keys(games).find(key => games[key].room === socket.room)]
+       
+                   if(game == null) return
+       
+                   delete games[game.id].players[socket.nickname]
+       
+                   let currentplayer = game.order.indexOf(socket.nickname);
+                   if(!(game.order[currentplayer+1])){
+                     game.currentplayer = game.order[0]
+                   } else {
+                     game.currentplayer = game.order[currentplayer+1]
+                   }
+       
+                   var index = games[game.id].order.indexOf(socket.nickname);
+                   if (index !== -1) {
+                     games[game.id].order.splice(index, 1);
+                   }
+       
+       
+       
+                   Object.values(game.players).forEach(player => {
+                     let gameid = game.id;
+       
+                     let gamedata = {currentcard: games[gameid].currentcard, currentplayer: games[gameid].currentplayer, pendingcards: games[gameid].pendingcard, order: games[gameid].order, next: games[gameid].order[games[gameid].order.indexOf(games[gameid].currentcard) + 1] ? games[gameid].order[games[gameid].order.indexOf(games[gameid].currentcard) + 1] : games[gameid].order[0] };
+             game.opponents = {}
+             Object.values(games[gameid].players).forEach(opponent => {
+               if(opponent.name == player.name) {
+                 return;
+               }
+               game.opponents[opponent.name] = {name: opponent.name, cards: opponent.cards.length};
+               console.log(game.opponents[opponent.name]);
+             });
+       
+                    io.to(player.id).emit("reload",player, gamedata, "ok" )
+                   })
+       }
+      }
+      
 
-                io.in("lobby").emit('roomList', Object.keys(rooms));
-              }
-
-              else{
-                return
-              }
-
- 
-            })
-
-          }
-
-          else if(room != null && (Object.keys(games).filter(i => games[i].room === room)) != null) {
-                
-            console.log("\n\n\n\n socket kilépett")
-            
-            let game = games[ Object.keys(games).find(key => games[key].room === socket.room)]
-
-            if(game == null) return
-
-            delete games[game.id].players[socket.nickname]
-
-            let currentplayer = game.order.indexOf(socket.nickname);
-            if(!(game.order[currentplayer+1])){
-              game.currentplayer = game.order[0]
-            } else {
-              game.currentplayer = game.order[currentplayer+1]
-            }
-
-            var index = games[game.id].order.indexOf(socket.nickname);
-            if (index !== -1) {
-              games[game.id].order.splice(index, 1);
-            }
 
 
 
-            Object.values(game.players).forEach(player => {
-              let gameid = game.id;
-
-              let gamedata = {currentcard: games[gameid].currentcard, currentplayer: games[gameid].currentplayer, pendingcards: games[gameid].pendingcard, order: games[gameid].order, next: games[gameid].order[games[gameid].order.indexOf(games[gameid].currentcard) + 1] ? games[gameid].order[games[gameid].order.indexOf(games[gameid].currentcard) + 1] : games[gameid].order[0] };
-      game.opponents = {}
-      Object.values(games[gameid].players).forEach(opponent => {
-        if(opponent.name == player.name) {
-          return;
-        }
-        game.opponents[opponent.name] = {name: opponent.name, cards: opponent.cards.length};
-        console.log(game.opponents[opponent.name]);
-      });
-
-             io.to(player.id).emit("reload",player, gamedata, "ok" )
-            })
-}
 }, 3000);
 
   });

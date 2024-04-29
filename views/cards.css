@@ -1,36 +1,113 @@
 
+  body{
+    background-color: #c7b4b4;
+  }
+
+  #game{
+    margin-top: 150px;
+  }
+
   .owncards {
-    position: absolute;
     height: auto;
     width: 90%;
-    bottom: 10px;
+    top: 30%;
     left: calc(50% - 45%);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
+    margin: auto;
+    margin-left: 10px;
+    margin-top: 50px;
+  }
+
+
+  #opponents{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  #opponents > div {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
   }
   
+ 
+  #opponents > div > h4 {
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+
   .card {
     display: flex;
     width: 150px;
     height: 217.5px;
-    background-color: #17141d;
     border-radius: 10px;
-    box-shadow: -1rem 0 3rem #000;
+    box-shadow: 1rem 0 -1rem #000000;
   /*   margin-left: -50px; */
     transition: 0.4s ease-out;
     position: relative;
     left: 0px;
-    margin-top: -170px;
+    margin-top: -100px;
   }
   
   .card:not(:first-child) {
       margin-left: -50px;
   }
   
+#currentcard{
+  width: 150px;
+  height: 217.5px
+}
+
+.placeholder{
+  width: 75px;
+  height: 108.75px;
+}
+
+/* .players{
+  position: relative;
+  top: 300px;
 
 
+  border: 3px solid black;
+
+  display: flex;
+} */
+
+.opponentcardlist, .playercardlist{
+
+    height: auto;
+    width: 100%;
+
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: left;
+  }
+
+  .playercardlist{
+    height: 225px;
+    align-items: end;
+    justify-content: start;
+
+    margin-left: 50px
+
+  }
+
+  .player{
+    width: 50%;
+  }
+
+  .placeholder:not(:first-child){
+    display: flex;
+    flex-direction: column;
+    margin-left: -30px;
+  }
+
+@media only screen and (min-width: 1000px) {
   .card:hover {
     transform: translateY(-20px);
     transition: 0.4s ease-out;
@@ -40,16 +117,7 @@
     position: relative;
     left: 50px;
     transition: 0.4s ease-out;
-  }
-  
-  .title {
-    color: white;
-    font-weight: 300;
-    position: absolute;
-    left: 20px;
-    top: 15px;
-  }
-  
+  }  
   
   .card:hover {
     /* width: 120px; */
@@ -60,21 +128,26 @@
     stroke-dashoffset: 100;
     transition: 0.6s ease-out;
   }
+}
 
-.opponentcardlist{
+  @media only screen and (max-width: 1000px) {
+    .card{
+      width: 75px;
+      height: 108.75px;
+      margin-top: -50px;
+    }
 
-    height: auto;
-    width: 90%;
-
-    display: flex;
-    flex-wrap: wrap;
-    align-items: left;
-    justify-content: left;
+    .card:not(:first-child), .card:is(:first-child) {
+      margin-left: -20px;
   }
 
+  .placeholder{
+  width: 50px;
+  height: 72.5px;
+}
 
-  .placeholder:not(:first-child){
-    display: flex;
-    flex-direction: column;
-    margin-left: -50px;
+  #currentcard{
+    width: 75px;
+    height: 108.75px
+  }
   }
