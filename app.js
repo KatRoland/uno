@@ -159,7 +159,7 @@ io.on('connection', function(socket) {
           console.log(game)
           let player = Object.values(games[gamename].players).filter(player => player.name === socket.nickname)
           if(game.room == socket.room){
-            roomgame = {personaldata: {playerinfo: player[0], gameid: gamename},currentcard: game.currentcard, currentplayer: game.currentplayer, status: game.status};
+            roomgame = {personaldata: {playerinfo: player[0], gameid: gamename},currentcard: game.currentcard, currentplayer: game.currentplayer, status: game.status, order: game.order};
             roomgame.opponents = {};
             
             console.log("é.é.é.é.")
@@ -203,7 +203,7 @@ io.on('connection', function(socket) {
 
             if(game.room == socket.room){
               game.players[socket.nickname].id = socket.id
-              roomgame = {personaldata: {playerinfo: player[0], gameid: gamename},currentcard: game.currentcard, currentplayer: game.currentplayer, status: game.status};
+              roomgame = {personaldata: {playerinfo: player[0], gameid: gamename},currentcard: game.currentcard, currentplayer: game.currentplayer, status: game.status, order: game.order};
               roomgame.opponents = {};
 
               Object.values(games[gamename].players).forEach(opponent => {
@@ -246,7 +246,7 @@ socket.on('start', function () {
   games[gameid].spectators = {}
   Object.values(rooms[rname].players).forEach(player => {
     console.log(player);
-    games[gameid].players[player.Name] = {id: player.id ,name: player.Name, cards: [...cardgen(5),"aa"]};
+    games[gameid].players[player.Name] = {id: player.id ,name: player.Name, cards: [...cardgen(5)]};
   });
 
   games[gameid].currentcard = startgen();
