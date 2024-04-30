@@ -100,7 +100,7 @@ io.on('connection', function(socket) {
   socket.join('lobby');
 
   // Kiküldi a jelenleg lévő szobákat
-  socket.emit('roomList', Object.keys(rooms));
+  socket.emit('roomList', rooms);
 
   // Szoba létrehozáskor
 
@@ -152,6 +152,8 @@ io.on('connection', function(socket) {
       
       // Kilépés a lobbyból
       socket.leave("lobby")
+      io.in("lobby").emit('reloadRoom', rooms[rname])
+
       let roomgame
       if(rooms[socket.room].status == "started"){
         for(let gamename in games){
@@ -180,6 +182,7 @@ io.on('connection', function(socket) {
       } else {
         roomgame = "N/A"
       }
+
 
       socket.emit('roomload', rooms[socket.room], socket.room, roomgame);
       io.in(rname).emit('playerlist', Object.keys(rooms[rname].players));
@@ -437,6 +440,11 @@ socket.on("usecard", (card,gameid) =>{
         console.log("----------------")
         console.log(player.id)
         io.to(player.id).emit('reload', player, game, status);
+
+        if(game.currentplayer == player.name) {
+          io.to(player.id).emit("round")
+        }
+
       });
 
       return;
@@ -482,6 +490,11 @@ socket.on("usecard", (card,gameid) =>{
         console.log("----------------")
         console.log(player.id)
         io.to(player.id).emit('reload', player, game, status);
+
+        if(game.currentplayer == player.name) {
+          io.to(player.id).emit("round")
+        }
+
       });
 
       return;
@@ -529,6 +542,11 @@ socket.on("usecard", (card,gameid) =>{
         console.log("----------------")
         console.log(player.id)
         io.to(player.id).emit('reload', player, game, status);
+        if(game.currentplayer == player.name) {
+          io.to(player.id).emit("round")
+        } 
+
+
       });
 
       return;
@@ -572,6 +590,10 @@ socket.on("usecard", (card,gameid) =>{
         console.log("----------------")
         console.log(player.id)
         io.to(player.id).emit('reload', player, game, status);
+
+        if(game.currentplayer == player.name) {
+          io.to(player.id).emit("round")
+        }
       });
 
       return;
@@ -657,6 +679,8 @@ let currentplayer = game.order.indexOf(socket.nickname);
 
     let room = socket.room
 
+  delete users[socket.nickname]
+
     setTimeout(() => {
 
       console.log("tiemout")
@@ -676,19 +700,24 @@ let currentplayer = game.order.indexOf(socket.nickname);
           console.log(index)
           
           delete rooms[socket.room].players[socket.nickname]
-          console.log(rooms[socket.room].players)
+          console.log(`player lista refresh: ${rooms[socket.room].players}`)
           io.in(socket.room).emit('playerlist', Object.keys(rooms[socket.room].players));
+          io.in("lobby").emit('reloadRoom', rooms[socket.room])
+
         }
       }
 
-  delete users[socket.nickname]
       } 
-      console.log(`kereső: ${users[socket.nickname].path} |||| ${room}`)
-  if(!users[socket.nickname].path.includes(`room/${room}` )) {
+      //console.log(`kereső: ${users[socket.nickname].path} |||| ${room}`)
+  if(!Object.keys(users).includes(socket.nickname) || !users[socket.nickname].path.includes(`room/${room}` )) {
 
     if(rooms[room] != null && Object.keys(rooms[room].players).includes(socket.nickname)) {
       delete rooms[room].players[socket.nickname]
+      io.in("lobby").emit('reloadRoom', rooms[socket.room])
+      io.in(rname).emit('playerlist', Object.keys(rooms[rname].players));
+
     }
+
 
     console.log("EZ KELL")
         console.log(Object.entries(rooms).filter(szoba => szoba[1].owner == socket.nickname ))
@@ -759,6 +788,9 @@ let currentplayer = game.order.indexOf(socket.nickname);
              });
        
                     io.to(player.id).emit("reload",player, gamedata, "ok" )
+      io.in(rname).emit('playerlist', Object.keys(rooms[rname].players));
+      console.log(`player lista refresh2: ${Object.keys(rooms[rname].players)}`)
+
                    })
        }
       }
@@ -776,7 +808,7 @@ app.post("/createroom", (req,res) => {
   if(nicknamecheck(req,res)){
     let roomName = req.body.roomName;
     if(!rooms[roomName]){
-    rooms[roomName] = { owner: nickname };
+    rooms[roomName] = {name: roomName ,owner: nickname };
     rooms[roomName].players = {};
     rooms[roomName].players[nickname] = {};
     rooms[roomName].players[nickname] = {Name: nickname, id: ""};
@@ -784,15 +816,15 @@ app.post("/createroom", (req,res) => {
     // Belépés a szobába
     // rooms[roomName].players.push(nickname);
     // Updateli mindenkinek a listát
-    io.in('lobby').emit('roomList', Object.keys(rooms));
   }
-
-    res.redirect(`/room/${roomName}`)
-
+  
+  res.redirect(`/room/${roomName}`)
+  
+  io.in('lobby').emit('roomList', rooms);
   }
 })
 
-let port = 5555
+let port = 5556
 
 server.listen(port, function() {
   console.log(`Listening on http://localhost:${port}`);

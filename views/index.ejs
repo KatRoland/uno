@@ -3,16 +3,21 @@
   <head>
     <title>Game Lobby</title>
     <!-- <link rel="stylesheet" href="style.css"> -->
+    <link rel="stylesheet" href="lobby.css">
   </head>
   <body>
-    <h1>Game Lobby</h1>
-    <div id="room-list"></div>
-    <form id="create-room-form" action="/createroom" method="POST">
-      <input type="text" id="room-name-input" name="roomName" placeholder="Szoba neve">
-      <button type="submit" id="createbutton">Létrehozás</button>
-    </form>
+    <div class="container">
 
-    <div id="players"></div>
+      <h1>Game Lobby</h1>
+      <form id="create-room-form" action="/createroom" method="POST">
+        <input type="text" id="room-name-input" name="roomName" placeholder="Szoba neve">
+        <button type="submit" id="createbutton">Létrehozás</button>
+      </form>
+  
+      <div id="room-list"></div>
+    </div>
+
+
 
 
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -23,17 +28,139 @@
       socket.on('roomList', function(roomList) {
         // Törli a mostani listát
         document.getElementById('room-list').innerHTML = '';
+        console.log(Object.values(roomList))
+        
+        console.log(Object.keys(roomList).forEach)
         // és kiíratja a jelenlegit
-        roomList.forEach(function(roomName) {
-          const roomElement = document.createElement('a');
-          roomElement.innerHTML = roomName;
-          roomElement.href= `/room/${roomName}`
-          document.getElementById('room-list').appendChild(roomElement);
+        Object.keys(roomList).forEach(function(roomid) {
+          console.log(roomid)
+          let room = roomList[roomid]
+          const roomdiv = document.createElement('div')
+          roomdiv.classList.add("roomdiv")
+          roomdiv.setAttribute('id', roomid)
+          const roomElement = document.createElement('div');
+          roomElement.classList.add("roomElement")
+          const roomHead = document.createElement('div');
+          roomHead.classList.add("roomHead")
+          const roomNametext = document.createElement("h3");
+          roomNametext.textContent = room.name
+          roomHead.append(roomNametext)
+
+          const playercount = document.createElement("p")
+          console.log(`szoba adatoK: ${JSON.stringify(room)}`)
+          playercount.textContent = `${Object.keys(room.players).length} játékos `
+          roomHead.append(playercount)
+
+
+          const playerlistdiv = document.createElement('div')
+          playerlistdiv.classList.add("playerlistdiv")
+
+          const playerlistcollapsetext = document.createElement("h4")
+          playerlistcollapsetext.textContent = "Playerek"
+          playerlistcollapsetext.classList.add("playerlistcollapsetext")
+
+          playerlistdiv.append(playerlistcollapsetext)
+
+          const playerlist = document.createElement('ul')
+          playerlist.classList.add("playerlist")
+          
+          Object.keys(room.players).forEach( (playername) => {
+            const player = document.createElement('li')
+            player.textContent = playername
+            playerlist.append(player)
+          } )
+
+          playerlistdiv.append(playerlist)
+
+          const joindiv = document.createElement('div')
+          joindiv.classList.add("joindiv")
+          const joinbutton = document.createElement('button')
+          joinbutton.classList.add("joinbutton")
+          joinbutton.textContent = "Csatlakozás"
+
+          joinbutton.addEventListener("click", () => {
+            location.href = `/room/${room.name}`
+          })
+
+          joindiv.append(joinbutton)
+
+
+
+          roomElement.append(roomHead)
+          roomdiv.append(roomElement)
+          roomdiv.append(playerlistdiv)
+          roomdiv.append(joindiv)
+
+          // roomElement.innerHTML = `${roomName}<br>`;
+          // roomElement.href= `/room/${roomName}`
+          document.getElementById('room-list').appendChild(roomdiv);
         });
       });
 
 
-      console.log(document.getElementById("createbutton"))
+      socket.on('reloadRoom', function(room) {
+        console.log(JSON.stringify(room))
+          const roomdiv = document.getElementById(room.name)
+
+          roomdiv.innerHTML = ''
+
+          const roomElement = document.createElement('div');
+          roomElement.classList.add("roomElement")
+          const roomHead = document.createElement('div');
+          roomHead.classList.add("roomHead")
+          const roomNametext = document.createElement("h3");
+          roomNametext.textContent = room.name
+          roomHead.append(roomNametext)
+
+          const playercount = document.createElement("p")
+          playercount.textContent = `${Object.keys(room.players).length} játékos `
+          roomHead.append(playercount)
+
+
+          const playerlistdiv = document.createElement('div')
+          playerlistdiv.classList.add("playerlistdiv")
+
+          const playerlistcollapsetext = document.createElement("h4")
+          playerlistcollapsetext.textContent = "Playerek"
+          playerlistcollapsetext.classList.add("playerlistcollapsetext")
+
+          playerlistdiv.append(playerlistcollapsetext)
+
+          const playerlist = document.createElement('ul')
+          playerlist.classList.add("playerlist")
+          
+          Object.keys(room.players).forEach( (playername) => {
+            const player = document.createElement('li')
+            player.textContent = playername
+            playerlist.append(player)
+          } )
+
+          playerlistdiv.append(playerlist)
+
+          const joindiv = document.createElement('div')
+          joindiv.classList.add("joindiv")
+          const joinbutton = document.createElement('button')
+          joinbutton.classList.add("joinbutton")
+          joinbutton.textContent = "Csatlakozás"
+          
+          
+          joinbutton.addEventListener("click", () => {
+            location.href = `/room/${room.name}`
+          })
+
+          joindiv.append(joinbutton)
+
+
+
+          roomElement.append(roomHead)
+          roomdiv.append(roomElement)
+          roomdiv.append(playerlistdiv)
+          roomdiv.append(joindiv)
+
+          // roomElement.innerHTML = `${roomName}<br>`;
+          // roomElement.href= `/room/${roomName}`
+          // document.getElementById('room-list').appendChild(roomdiv);
+      });
 
     </script>
   </body>

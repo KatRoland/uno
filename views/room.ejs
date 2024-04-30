@@ -24,6 +24,21 @@
         align-items: center;
       }
 
+      #notification{
+        position: absolute;
+        top: 50%;
+        left: 50%;
+
+        transform: translate(-50%, -50%);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        width: 50%;
+        height: 25%;
+        background-color: white;
+        z-index: 9;
+      }
+
       #colorselect > button {
         z-index: 6;
         width: 40%;
@@ -72,6 +87,10 @@
 
     <div id="game"></div>
 
+    <div id="notification">
+      <h3>A te köröd</h3>
+    </div>
+
 
     <!-- <div id="players" class="players"></div> -->
 
@@ -119,7 +138,7 @@
 
       // Player lista kiíratás
       socket.on('playerlist', playerlist => {
-        console.log(playerlist)
+        console.log(`player lista refresh: ${playerlist}`)
         // Törli a mostani listát
         document.getElementById('playerlist').innerHTML = '';
         // és kiíratja a jelenlegit
@@ -315,6 +334,14 @@
 
       socket.on("quit", () => {
         window.location.replace("/")
+      })
+
+      socket.on("round", () => {
+        console.log("round")
+        document.getElementById("notification").style.display = "flex"
+        setTimeout(() => {
+        document.getElementById("notification").style.display = "none"
+        }, 1500 )
       })
 
       socket.on("isstarted", () => {
